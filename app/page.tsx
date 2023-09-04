@@ -1,95 +1,67 @@
-import Image from 'next/image'
-import styles from './page.module.css'
+'use client';
+import { flex } from '@/styled-system/patterns';
+import KanbanColumn from './components/KanbanColumn';
+import { DragDropContext, DropResult } from 'react-beautiful-dnd';
+import { useState } from 'react';
 
 export default function Home() {
+  const [todoTasks, setTodoTasks] = useState<string[]>([]);
+  const [doingTasks, setDoingTasks] = useState<string[]>([]);
+  const [doneTasks, setDoneTasks] = useState<string[]>([]);
+
+  const onAddTask = (taskContent: string) => {
+    if (taskContent.trim() !== '') {
+      setTodoTasks([...todoTasks, taskContent]);
+    }
+  };
+
+  const onDragEnd = (result: DropResult) => {
+    const { source, destination, draggableId } = result;
+
+    if (!destination) return;
+
+    // Create copies of the tasks from all columns
+    const updatedTodoTasks = [...todoTasks];
+    const updatedDoingTasks = [...doingTasks];
+    const updatedDoneTasks = [...doneTasks];
+
+    // Get the task to move
+    const taskToMove = draggableId;
+
+    if (source.droppableId === 'Todo') {
+      updatedTodoTasks.splice(source.index, 1);
+    } else if (source.droppableId === 'Doing') {
+      updatedDoingTasks.splice(source.index, 1);
+    } else if (source.droppableId === 'Done') {
+      updatedDoneTasks.splice(source.index, 1);
+    }
+
+    if (destination.droppableId === 'Todo') {
+      updatedTodoTasks.splice(destination.index, 0, taskToMove);
+    } else if (destination.droppableId === 'Doing') {
+      updatedDoingTasks.splice(destination.index, 0, taskToMove);
+    } else if (destination.droppableId === 'Done') {
+      updatedDoneTasks.splice(destination.index, 0, taskToMove);
+    }
+
+    // Update the state with the new task order in all columns
+    setTodoTasks(updatedTodoTasks);
+    setDoingTasks(updatedDoingTasks);
+    setDoneTasks(updatedDoneTasks);
+  };
+
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>app/page.tsx</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
+    <main className={flex({ gap: '10', px: '10', py: '5', width: '100vw' })}>
+      <DragDropContext onDragEnd={onDragEnd}>
+        <KanbanColumn
+          title="Todo"
+          tasks={todoTasks}
+          onAddTask={onAddTask}
+          onDragEnd={onDragEnd}
         />
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore the Next.js 13 playground.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
+        <KanbanColumn title="Doing" tasks={doingTasks} onDragEnd={onDragEnd} />
+        <KanbanColumn title="Done" tasks={doneTasks} onDragEnd={onDragEnd} />
+      </DragDropContext>
     </main>
-  )
+  );
 }
